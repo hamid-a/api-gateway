@@ -1,0 +1,16 @@
+application:
+  applicationPort: 8080
+  metrcisPort: 8081
+  debug: true
+
+upstreams:
+    - name: Service-A
+      backend:
+        - connection: http
+          timeout: 3s
+        - connection: grpc
+          timeout: 1s
+    - name: Service-B
+      backend:
+        - connection: grpc
+          timeout: 1s
