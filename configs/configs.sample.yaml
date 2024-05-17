@@ -3,6 +3,7 @@ app:
   metricsPort: 8081
   debug: true
   logLevel: debug
+  gracefullyShutdownTimeout: "2s"
 
 upstreams:
     - name: Service-A
