@@ -11,8 +11,8 @@ import (
 )
 
 type Config struct {
-	App       App
-	Upstreams []Upstreams
+	App       App         `koanf:"app"`
+	Upstreams []Upstreams `koanf:"upstreams"`
 }
 
 // NewConfig returns a new Config

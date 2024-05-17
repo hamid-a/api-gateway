@@ -1,7 +1,8 @@
 package config
 
 type App struct {
-	Debug           bool `koanf:"true"`
-	ApllicationPort int  `koanf:"applicationPort"`
-	MetricsPort     int  `koanf:"metricsPort"`
+	AppPort     int    `koanf:"appPort"`
+	MetricsPort int    `koanf:"metricsPort"`
+	Debug       bool   `koanf:"debug"`
+	LogLevel    string `koanf:"logLevel"`
 }

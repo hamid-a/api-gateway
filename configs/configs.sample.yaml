@@ -1,7 +1,8 @@
-application:
-  applicationPort: 8080
-  metrcisPort: 8081
+app:
+  appPort: 8080
+  metricsPort: 8081
   debug: true
+  logLevel: debug
 
 upstreams:
     - name: Service-A
