@@ -1,6 +1,6 @@
 package config
 
-type Upstreams struct {
+type Upstream struct {
 	Name    string    `koanf:"name"`
 	Backend []Backend `koanf:"backend"`
 }
