@@ -7,6 +7,7 @@ import (
 	"github.com/hamid-a/api-gateway/internal/app"
 	"github.com/hamid-a/api-gateway/internal/config"
 	"github.com/hamid-a/api-gateway/internal/log"
+	"github.com/hamid-a/api-gateway/internal/upstream"
 	_ "go.uber.org/automaxprocs"
 	"os"
 	"os/signal"
@@ -23,7 +24,12 @@ func main() {
 	logger := log.NewLogger(config)
 	logger.Info("logger initialized")
 
-	server := app.InitServer(config, logger)
+	err, upstreams := upstream.Init(config)
+	if err != nil {
+		panic(err)
+	}
+
+	server := app.InitServer(config, logger, upstreams)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

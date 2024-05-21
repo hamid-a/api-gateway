@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/hamid-a/api-gateway/internal/config"
+	"github.com/hamid-a/api-gateway/internal/upstream"
 	"go.uber.org/zap"
 	"net/http"
 	"fmt"
@@ -9,7 +10,7 @@ import (
 	"github.com/hamid-a/api-gateway/internal/middleware"
 )
 
-func InitServer(config config.Config, logger *zap.Logger) *http.Server {
+func InitServer(config config.Config, logger *zap.Logger, upstream upstream.UpStream) *http.Server {
 	if config.App.Debug {
 		gin.SetMode(gin.DebugMode)
 	} else {
@@ -18,7 +19,7 @@ func InitServer(config config.Config, logger *zap.Logger) *http.Server {
 
 	engine := gin.New()
 	engine.Use(gin.Recovery())
-	engine.Use(middleware.Rule(config))
+	engine.Use(middleware.Rule(config, upstream))
 
 	registerRoutes(engine, config.Rules)
 

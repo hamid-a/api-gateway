@@ -4,10 +4,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hamid-a/api-gateway/internal/config"
 	"github.com/hamid-a/api-gateway/internal/util"
+	"github.com/hamid-a/api-gateway/internal/upstream"
 	"net/http"
 )
 
-func Rule(config config.Config) gin.HandlerFunc {
+func Rule(config config.Config, upstream upstream.UpStream) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
 		method := c.Request.Method
@@ -17,8 +18,8 @@ func Rule(config config.Config) gin.HandlerFunc {
 				if rule.Auth {
 					Auth()(c)
 				}
-				// Implement rule logic and load balancing
 
+				upstream[rule.Upstream].Forward(c, rule.URL)
 				return
 			}
 		}
