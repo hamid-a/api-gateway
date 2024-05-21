@@ -6,7 +6,7 @@ import (
 )
 
 type Service interface {
-	Forward(c *gin.Context, url string)
+	Forward(c *gin.Context)
 }
 
 type UpStream map[string]Service

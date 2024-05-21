@@ -1,13 +1,15 @@
 package app
 
 import (
+	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 	"github.com/hamid-a/api-gateway/internal/config"
+	"github.com/hamid-a/api-gateway/internal/middleware"
+	"github.com/hamid-a/api-gateway/internal/server"
 	"github.com/hamid-a/api-gateway/internal/upstream"
 	"go.uber.org/zap"
-	"net/http"
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/hamid-a/api-gateway/internal/middleware"
 )
 
 func InitServer(config config.Config, logger *zap.Logger, upstream upstream.UpStream) *http.Server {
@@ -19,9 +21,11 @@ func InitServer(config config.Config, logger *zap.Logger, upstream upstream.UpSt
 
 	engine := gin.New()
 	engine.Use(gin.Recovery())
-	engine.Use(middleware.Rule(config, upstream))
+	engine.Use(middleware.Rule(config))
+	engine.Use(middleware.Auth())
 
-	registerRoutes(engine, config.Rules)
+	handler := server.NewHandler(config, upstream)
+	handler.InitRoutes(engine)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf("0.0.0.0:%d", config.App.AppPort),
@@ -36,20 +40,4 @@ func InitServer(config config.Config, logger *zap.Logger, upstream upstream.UpSt
 	}()
 
 	return srv
-}
-
-func registerRoutes(e *gin.Engine, rules []config.Rule) {
-	// Define routes
-	for _, rule := range rules {
-		for _, method := range rule.Methods {
-			switch method {
-			case "GET":
-				e.GET(rule.Path, func(c *gin.Context) {})
-			case "POST":
-				e.POST(rule.Path, func(c *gin.Context) {})
-			case "OPTIONS":
-				e.OPTIONS(rule.Path, func(c *gin.Context) {})
-			}
-		}
-	}
 }

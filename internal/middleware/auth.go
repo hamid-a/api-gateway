@@ -7,8 +7,9 @@ import (
 
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Impelemt auth
-
+		if c.GetBool("auth") {
+			// Impelemt auth logic
+		}
 		c.Next()
 	}
 }

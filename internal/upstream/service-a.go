@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	config "github.com/hamid-a/api-gateway/internal/config"
+	"io"
 	"net/http"
 	"sync"
-	"io"
 )
 
 type Backend struct {
@@ -48,13 +48,14 @@ func (upstream *ServiceA) getBackend() (*Backend, error) {
 	return &backend, nil
 }
 
-func (upstream *ServiceA) Forward(c *gin.Context, url string) {
+func (upstream *ServiceA) Forward(c *gin.Context) {
 	backend, err := upstream.getBackend()
 	if err != nil {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "no available upstream"})
 		return
 	}
 
+	url := c.GetString("path")
 	req, err := http.NewRequest(c.Request.Method, backend.BaseURL+url, c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
