@@ -7,13 +7,13 @@ app:
 
 rules:
   - name: "servie-a-router"
-    path: "/servie-a-path"
+    path: "/service-a-path"
     auth: true
     upstream: "ServiceA"
     url: "upstream-a-path"
     methods: ["GET", "POST", "OPTIONS"]
   - name: "servie-b-router"
-    path: "/servie-b-path"
+    path: "/service-b-path"
     auth: true
     upstream: "ServiceB"
     url: "upstream-b-path"
@@ -50,6 +50,10 @@ upstreams:
           connection: grpc
           addr: "http://service-a1.svc.cluster.local"
           timeout: 1s
+          keepalive:
+            time: "10s"
+            timeout: "15s"
+            permitWithoutStream: true
           cb:
             enabled: true
             resetInterval: "60s"

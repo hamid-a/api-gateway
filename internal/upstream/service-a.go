@@ -10,12 +10,16 @@ import (
 	"github.com/gin-gonic/gin"
 	cb "github.com/hamid-a/api-gateway/internal/cb"
 	config "github.com/hamid-a/api-gateway/internal/config"
+	rpc "github.com/hamid-a/api-gateway/pkg/proto/serviceb"
+	"time"
 )
 
 type Backend struct {
-	BaseURL    string
-	HTTPClient *http.Client
-	CB         cb.CircuitBreaker
+	baseURL      string
+	httpClient   *http.Client
+	cb           cb.CircuitBreaker
+	serviceBStub rpc.ServiceBClient
+	timeout time.Duration
 }
 
 type ServiceA struct {
@@ -28,9 +32,9 @@ func NewServiceA(c config.Upstream) *ServiceA {
 	service := ServiceA{}
 	for _, v := range c.Backends {
 		b := Backend{
-			BaseURL:    v.Addr,
-			HTTPClient: &http.Client{Timeout: v.Timeout},
-			CB:         *cb.NewCircuitBreaker(v.Name, v.Cb),
+			baseURL:    v.Addr,
+			httpClient: &http.Client{Timeout: v.Timeout},
+			cb:         *cb.NewCircuitBreaker(v.Name, v.Cb),
 		}
 		service.Backend = append(service.Backend, b)
 	}
@@ -52,7 +56,7 @@ func (upstream *ServiceA) getBackend() (*Backend, error) {
 		backend := upstream.Backend[upstream.index]
 		upstream.index = (upstream.index + 1) % len(upstream.Backend)
 		// check circute breaker state and if open get another backend
-		if !backend.CB.IsOpen() {
+		if !backend.cb.IsOpen() {
 			selectedBackend = backend
 			break
 		}
@@ -69,7 +73,7 @@ func (upstream *ServiceA) Forward(c *gin.Context) error {
 		return errors.New("no available upstream")
 	}
 
-	done, err := backend.CB.Allow()
+	done, err := backend.cb.Allow()
 	if err != nil {
 		return errors.New("no available upstream")
 	}
@@ -79,14 +83,14 @@ func (upstream *ServiceA) Forward(c *gin.Context) error {
 	}()
 
 	url := c.GetString("path")
-	req, err := http.NewRequest(c.Request.Method, backend.BaseURL+url, c.Request.Body)
+	req, err := http.NewRequest(c.Request.Method, backend.baseURL+url, c.Request.Body)
 	if err != nil {
 		resErr = errors.New("no available upstream")
 		return resErr
 	}
 
 	req.Header = c.Request.Header
-	resp, err := backend.HTTPClient.Do(req)
+	resp, err := backend.httpClient.Do(req)
 	if err != nil {
 		resErr = err
 		return resErr

@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package ServiceB;
+
+option go_package = "/serviceb";
+
+service ServiceB {
+    rpc Server (Request) returns (Response) {}
+}
+
+message Request {
+    map<string, HeaderValueList> header = 1 [json_name = "header"];
+    string body = 2 [json_name = "body"];
+}
+
+message Response {
+    map<string, HeaderValueList> header = 1 [json_name = "header"];
+    string body = 2 [json_name = "body"];
+}
+
+message HeaderValueList {
+    repeated string list = 1 [json_name = "list"];
+}

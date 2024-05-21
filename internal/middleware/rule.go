@@ -1,10 +1,11 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/hamid-a/api-gateway/internal/config"
 	"github.com/hamid-a/api-gateway/internal/util"
-	"net/http"
 )
 
 func Rule(config config.Config) gin.HandlerFunc {

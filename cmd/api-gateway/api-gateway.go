@@ -24,7 +24,7 @@ func main() {
 	logger := log.NewLogger(config)
 	logger.Info("logger initialized")
 
-	err, upstreams := upstream.Init(config)
+	upstreams, err := upstream.Init(config)
 	if err != nil {
 		panic(err)
 	}
