@@ -19,6 +19,7 @@ func Rule(config config.Config) gin.HandlerFunc {
 				c.Set("path", rule.URL)
 				c.Set("upstream", rule.Upstream)
 				c.Next()
+				return
 			}
 		}
 

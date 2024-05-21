@@ -4,20 +4,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hamid-a/api-gateway/internal/config"
 	"github.com/hamid-a/api-gateway/internal/upstream"
+	"go.uber.org/zap"
 )
 
 type Handler struct {
-	Upstream upstream.UpStream
-	Config   config.Config
+	upstream upstream.UpStream
+	config   config.Config
+	logger   *zap.Logger
 }
 
-func NewHandler(Config config.Config, upstream upstream.UpStream) Handler {
-	return Handler{Upstream: upstream, Config: Config}
+func NewHandler(c config.Config, u upstream.UpStream, l *zap.Logger) Handler {
+	return Handler{upstream: u, config: c, logger: l}
 }
 
 func (handler *Handler) InitRoutes(e *gin.Engine) {
 	// Define routes
-	for _, rule := range handler.Config.Rules {
+	for _, rule := range handler.config.Rules {
 		for _, method := range rule.Methods {
 			switch method {
 			case "GET":

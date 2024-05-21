@@ -24,7 +24,7 @@ func InitServer(config config.Config, logger *zap.Logger, upstream upstream.UpSt
 	engine.Use(middleware.Rule(config))
 	engine.Use(middleware.Auth())
 
-	handler := server.NewHandler(config, upstream)
+	handler := server.NewHandler(config, upstream, logger)
 	handler.InitRoutes(engine)
 
 	srv := &http.Server{

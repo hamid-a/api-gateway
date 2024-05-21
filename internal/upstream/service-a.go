@@ -1,17 +1,21 @@
 package upstream
 
 import (
+	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	config "github.com/hamid-a/api-gateway/internal/config"
 	"io"
 	"net/http"
 	"sync"
+
+	"github.com/gin-gonic/gin"
+	cb "github.com/hamid-a/api-gateway/internal/cb"
+	config "github.com/hamid-a/api-gateway/internal/config"
 )
 
 type Backend struct {
 	BaseURL    string
 	HTTPClient *http.Client
+	CB         cb.CircuitBreaker
 }
 
 type ServiceA struct {
@@ -26,6 +30,7 @@ func NewServiceA(c config.Upstream) *ServiceA {
 		b := Backend{
 			BaseURL:    v.Addr,
 			HTTPClient: &http.Client{Timeout: v.Timeout},
+			CB:         *cb.NewCircuitBreaker(v.Name, v.Cb),
 		}
 		service.Backend = append(service.Backend, b)
 	}
@@ -41,32 +46,50 @@ func (upstream *ServiceA) getBackend() (*Backend, error) {
 	if len(upstream.Backend) == 0 {
 		return nil, fmt.Errorf("no backends available for upstream")
 	}
-	// check circute breaker
 
-	backend := upstream.Backend[upstream.index]
-	upstream.index = (upstream.index + 1) % len(upstream.Backend)
-	return &backend, nil
+	var selectedBackend Backend
+	for i := 0; i < len(upstream.Backend); i++ {
+		backend := upstream.Backend[upstream.index]
+		upstream.index = (upstream.index + 1) % len(upstream.Backend)
+		// check circute breaker state and if open get another backend
+		if !backend.CB.IsOpen() {
+			selectedBackend = backend
+			break
+		}
+	}
+
+	return &selectedBackend, nil
 }
 
-func (upstream *ServiceA) Forward(c *gin.Context) {
+func (upstream *ServiceA) Forward(c *gin.Context) error {
+	var resErr error
+
 	backend, err := upstream.getBackend()
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "no available upstream"})
-		return
+		return errors.New("no available upstream")
 	}
+
+	done, err := backend.CB.Allow()
+	if err != nil {
+		return errors.New("no available upstream")
+	}
+
+	defer func() {
+		done(resErr == nil)
+	}()
 
 	url := c.GetString("path")
 	req, err := http.NewRequest(c.Request.Method, backend.BaseURL+url, c.Request.Body)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		resErr = errors.New("no available upstream")
+		return resErr
 	}
 
 	req.Header = c.Request.Header
 	resp, err := backend.HTTPClient.Do(req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		resErr = err
+		return resErr
 	}
 	defer resp.Body.Close()
 
@@ -78,6 +101,8 @@ func (upstream *ServiceA) Forward(c *gin.Context) {
 
 	c.Status(resp.StatusCode)
 	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return err
 	}
+
+	return nil
 }

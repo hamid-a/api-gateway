@@ -7,29 +7,53 @@ app:
 
 rules:
   - name: "servie-a-router"
-    path: "servie-a-path"
+    path: "/servie-a-path"
     auth: true
-    upstream: "Service-A"
+    upstream: "ServiceA"
     url: "upstream-a-path"
     methods: ["GET", "POST", "OPTIONS"]
   - name: "servie-b-router"
-    path: "servie-b-path"
+    path: "/servie-b-path"
     auth: true
-    upstream: "Service-B"
+    upstream: "ServiceB"
     url: "upstream-b-path"
     methods: ["GET", "POST", "OPTIONS"]
 
 upstreams:
-    - name: Service-A
+    - name: ServiceA
       backends:
-        - connection: http
+        - name: "ServiceA-1"
+          connection: http
           addr: "http://service-a1.svc.cluster.local"
           timeout: 3s
-        - connection: grpc
-          addr: "dns:///service-a1.svc.cluster.local"
-          timeout: 1s
-    - name: Service-B
-      backends:
-        - connection: grpc
+          cb:
+            enabled: true
+            resetInterval: "60s"
+            openTimeout: "60s"
+            maxRequests: 2
+            minRequests: 3
+            failureRatioThereshold: 0.6
+        - name: "ServiceA-2"
+          connection: http
           addr: "http://service-a1.svc.cluster.local"
           timeout: 1s
+          cb:
+            enabled: true
+            resetInterval: "60s"
+            openTimeout: "60s"
+            maxRequests: 2
+            minRequests: 3
+            failureRatioThereshold: 0.6
+    - name: ServiceB
+      backends:
+        - name: "ServiceB-1"
+          connection: grpc
+          addr: "http://service-a1.svc.cluster.local"
+          timeout: 1s
+          cb:
+            enabled: true
+            resetInterval: "60s"
+            openTimeout: "60s"
+            maxRequests: 2
+            minRequests: 3
+            failureRatioThereshold: 0.6

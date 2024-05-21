@@ -1,12 +1,12 @@
 package upstream
 
 import (
-	"github.com/hamid-a/api-gateway/internal/config"
 	"github.com/gin-gonic/gin"
+	"github.com/hamid-a/api-gateway/internal/config"
 )
 
 type Service interface {
-	Forward(c *gin.Context)
+	Forward(c *gin.Context) error
 }
 
 type UpStream map[string]Service
@@ -16,7 +16,7 @@ func Init(c config.Config) (error, UpStream) {
 	for _, u := range c.Upstreams {
 		if u.Name == "ServiceA" {
 			upstreams["ServiceA"] = NewServiceA(u)
-		} else if  u.Name == "ServiceA" {
+		} else if u.Name == "ServiceB" {
 
 		}
 	}
